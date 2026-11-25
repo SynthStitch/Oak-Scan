@@ -1,5 +1,7 @@
 # OAK//SCAN
 
+> 🚧 **Work in progress: still in prototyping.** Expect rough edges, breaking changes and untested steps. 🚧
+
 Turntable 3D scanning with a **Luxonis OAK-D Lite**: a printed camera stand, a speckle platter, a web control UI,
 and a photo-to-mesh pipeline through **RealityScan**, ending in an editable model in **Fusion**.
 
@@ -9,7 +11,7 @@ and a photo-to-mesh pipeline through **RealityScan**, ending in an editable mode
 |---|---|---|
 | ![stand](docs/stand-iso-right.png) | ![stand](docs/stand-iso-left.png) | ![platter](docs/speckle-platter.png) |
 
-> **Status:** capture, masking, the web UI and the depth fallback all work. Photogrammetry was blocked by
+> 🚧 **Status:** capture, masking, the web UI and the depth fallback all work. Photogrammetry was blocked by
 > the smooth test object on a blank white platter (not enough features to align); the speckle platter is the
 > fix and is being printed now. The quad remesh → Fusion T-spline step is planned, not yet automated.
 
