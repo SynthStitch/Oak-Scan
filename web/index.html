@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OAK//SCAN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 7.css: Windows 7 Aero glass components (MIT, github.com/khang-nd/7.css) -->
+<link rel="stylesheet" href="https://unpkg.com/7.css@0.16.0/dist/7.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --aqua: #2fd3ff;
+    --aqua-deep: #0a6fb8;
+    --lime: #9dff6a;
+    --rec: #ff3b4e;
+    --amber: #ffb627;
+    --ink: #0b2236;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    overflow: hidden;
+    background: radial-gradient(120% 90% at 15% 0%, #1a8fd6 0%, #0b4f8f 35%, #062a52 70%, #03142b 100%);
+    color: #fff;
+  }
+  /* Vista aurora: slow drifting light ribbons */
+  .aurora { position: fixed; inset: -20%; pointer-events: none; filter: blur(40px); opacity: .85; }
+  .aurora i {
+    position: absolute; display: block; border-radius: 50%;
+    mix-blend-mode: screen; animation: drift 26s ease-in-out infinite alternate;
+  }
+  .aurora i:nth-child(1) { width: 70vw; height: 18vw; left: -5vw; top: 22vh; background: linear-gradient(90deg, transparent, #49e3ff88, #7dffb366, transparent); transform: rotate(-14deg); }
+  .aurora i:nth-child(2) { width: 60vw; height: 12vw; right: -10vw; top: 58vh; background: linear-gradient(90deg, transparent, #4aa8ff77, #b3f3ff55, transparent); transform: rotate(9deg); animation-duration: 34s; }
+  .aurora i:nth-child(3) { width: 30vw; height: 30vw; left: 55vw; top: -8vh; background: radial-gradient(circle, #ffffff33, transparent 60%); animation-duration: 40s; }
+  @keyframes drift { to { translate: 6vw -4vh; rotate: 6deg; } }
+  .bubbles span {
+    position: fixed; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 30% 28%, #ffffffcc 0 8%, #ffffff22 22%, #8fe9ff18 55%, #ffffff30 70%, transparent 72%);
+    box-shadow: inset 0 0 18px #ffffff30; animation: float 18s ease-in-out infinite;
+  }
+  @keyframes float { 50% { transform: translateY(-24px); } }
+
+  .app {
+    position: relative; height: 100%; display: grid; gap: 14px; padding: 14px 18px 18px;
+    grid-template-columns: 420px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; }
+  .wordmark {
+    font-family: "Michroma", sans-serif; font-size: 26px; letter-spacing: .18em; margin: 0;
+    background: linear-gradient(180deg, #ffffff 0%, #d9f6ff 42%, #6fb6d9 50%, #e9fbff 62%, #9fd8f0 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 0 #0a3a66) drop-shadow(0 0 14px #49d8ff66);
+  }
+  .wordmark b { color: transparent; -webkit-text-stroke: 1px #bff3ff; }
+  .tag { font: 11px "Segoe UI", sans-serif; letter-spacing: .3em; text-transform: uppercase; color: #bfe9ffaa; }
+
+  /* status orb pill */
+  .pill {
+    margin-left: auto; display: flex; align-items: center; gap: 10px; padding: 6px 16px 6px 8px;
+    border-radius: 99px; font: 600 12px "Segoe UI", sans-serif; letter-spacing: .12em;
+    background: linear-gradient(180deg, #ffffff40, #ffffff10 50%, #00000018 51%, #ffffff12);
+    border: 1px solid #ffffff55; box-shadow: inset 0 1px 0 #ffffffaa, 0 6px 20px #00143066;
+  }
+  .orb { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff 0 12%, var(--c, var(--lime)) 45%, #00000066 100%); box-shadow: 0 0 12px var(--c, var(--lime)); }
+  .pill[data-s="RECORDING"] { --c: var(--rec); } .pill[data-s="RECORDING"] .orb { animation: pulse 1s infinite; }
+  .pill[data-s="BUILDING"] { --c: var(--amber); } .pill[data-s="NO PLATTER"] { --c: #9aa7b3; }
+  @keyframes pulse { 50% { box-shadow: 0 0 26px var(--rec); transform: scale(1.12); } }
+
+  /* 7.css windows, tuned */
+  .window.glass { margin: 0; box-shadow: 0 18px 50px #00102a99, 0 0 0 1px #ffffff22; }
+  .window-body { color: #111; }
+  .col { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .feeds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .feed { position: relative; border-radius: 6px; overflow: hidden; background: #000; aspect-ratio: 8/3;
+          box-shadow: inset 0 0 0 1px #00000080, 0 1px 0 #ffffffaa; }
+  .feed img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .feed .lbl.r { left: calc(50% + 6px); }
+  .feed::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #ffffff88; }
+  .feed .lbl { position: absolute; left: 6px; top: 5px; font: 600 10px "Segoe UI"; letter-spacing: .15em; color: #fff;
+               text-shadow: 0 1px 2px #000; text-transform: uppercase; }
+  .readouts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .readouts div { text-align: center; padding: 4px 0; border-radius: 4px; background: linear-gradient(#fdfdfd, #e6eef5); border: 1px solid #b9c9d8; }
+  .readouts b { display: block; font: 600 16px "Segoe UI"; color: var(--aqua-deep); }
+  .readouts small { font-size: 10px; color: #5a6b7b; letter-spacing: .08em; text-transform: uppercase; }
+
+  /* the glossy record orb */
+  .controls { display: flex; align-items: center; gap: 16px; }
+  button.rec-orb, button.rec-orb:hover:not(:disabled), button.rec-orb:active:not(:disabled), button.rec-orb:focus {
+    width: 76px; height: 76px; min-width: 0; padding: 0; border-radius: 50%; border: 1px solid #5c0a14; cursor: pointer;
+    background: radial-gradient(circle at 50% 120%, #ff8a95 0%, transparent 55%),
+                radial-gradient(circle at 50% 40%, #ff4256, #b5051a 70%, #6b0010);
+    box-shadow: inset 0 -6px 14px #4a0008aa, 0 6px 16px #00000066, 0 0 0 4px #ffffff55;
+    position: relative; transition: transform .12s;
+  }
+  button.rec-orb::before { content: ""; position: absolute; left: 14%; right: 14%; top: 6%; height: 44%; border-radius: 50% 50% 45% 45%;
+                     background: linear-gradient(#ffffffd9, #ffffff10); }
+  button.rec-orb::after { content: ""; position: absolute; inset: 30px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px #fff; transition: all .2s; }
+  button.rec-orb:hover { transform: scale(1.05); }
+  button.rec-orb.on::after { inset: 28px; border-radius: 3px; }
+  button.rec-orb.on { animation: recglow 1.2s infinite; }
+  @keyframes recglow { 50% { box-shadow: inset 0 -6px 14px #4a0008aa, 0 0 34px #ff3b4e, 0 0 0 4px #ffffff88; } }
+  .btns { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .btns button { width: 100%; }
+
+  .sliders { display: grid; grid-template-columns: 92px 1fr 34px; align-items: center; gap: 2px 8px; }
+  .sliders output { text-align: right; font-variant-numeric: tabular-nums; color: var(--aqua-deep); font-weight: 600; }
+  .msg { margin-top: 8px; min-height: 18px; color: #234; font-style: italic; }
+  [role=progressbar] { margin-top: 6px; display: none; }
+  .building [role=progressbar] { display: block; }
+
+  /* viewer */
+  .viewer { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .viewer .window-body { flex: 1; margin: 0; padding: 0; position: relative; overflow: hidden; border-radius: 0 0 6px 6px;
+    background: radial-gradient(80% 70% at 50% 35%, #12507e 0%, #072a4a 60%, #03162a 100%); }
+  #three { position: absolute; inset: 0; }
+  #three canvas { display: block; width: 100% !important; height: 100% !important; }
+  .vtools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 2; }
+  .hint { position: absolute; left: 12px; bottom: 10px; font: 11px "Segoe UI"; color: #bfe9ff88; letter-spacing: .1em; }
+  .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none;
+           font-family: "Michroma"; letter-spacing: .25em; color: #bfe9ff55; font-size: 12px; }
+
+  .load > * { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+  .load > *:nth-child(2) { animation-delay: .08s; } .load > *:nth-child(3) { animation-delay: .16s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.985); } }
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="bubbles">
+  <span style="width:90px;height:90px;left:3vw;bottom:6vh"></span>
+  <span style="width:46px;height:46px;left:31vw;bottom:14vh;animation-delay:-6s"></span>
+  <span style="width:130px;height:130px;right:4vw;top:9vh;animation-delay:-11s"></span>
+</div>
+
+<div class="app">
+  <header>
+    <h1 class="wordmark">OAK<b>//</b>SCAN</h1>
+    <span class="tag">turntable photogrammetry · oak-d lite</span>
+    <div class="pill" id="pill" data-s="READY"><span class="orb"></span><span id="state">CONNECTING</span></div>
+  </header>
+
+  <div class="col load">
+    <div class="window glass active">
+      <div class="title-bar"><div class="title-bar-text">Camera</div></div>
+      <div class="window-body has-space">
+        <div class="feed"><img src="/stream" alt="color and depth cameras"><span class="lbl">Color</span><span class="lbl r">Depth</span></div>
+        <div class="readouts">
+          <div><b id="fps">–</b><small>fps</small></div>
+          <div><b id="dist">–</b><small>object cm</small></div>
+          <div><b id="frames">0</b><small>frames</small></div>
+          <div><b id="photos">0</b><small>13MP photos</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window glass active" id="ctl">
+      <div class="title-bar"><div class="title-bar-text">Capture</div></div>
+      <div class="window-body has-space">
+        <div class="controls">
+          <button class="rec-orb" id="rec" title="Record / Stop" aria-label="Record"></button>
+          <div class="btns">
+            <button id="af">Autofocus</button>
+            <button id="build" class="default">Build model</button>
+          </div>
+        </div>
+        <div role="progressbar" class="marquee"></div>
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+
+    <div class="window glass active">
+      <div class="title-bar"><div class="title-bar-text">Calibration</div></div>
+      <div class="window-body has-space">
+        <div class="sliders">
+          <label for="min_d">Min depth</label><input type="range" id="min_d" min="10" max="80"><output for="min_d"></output>
+          <label for="max_d">Max depth</label><input type="range" id="max_d" min="15" max="120"><output for="max_d"></output>
+          <label for="focus">Focus</label><input type="range" id="focus" min="0" max="255"><output for="focus"></output>
+          <label for="chroma">Object color</label><input type="range" id="chroma" min="3" max="30"><output for="chroma"></output>
+        </div>
+        <input type="checkbox" id="photos_on" checked><label for="photos_on">Save 13MP photos for RealityScan</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="window glass active viewer load">
+    <div class="title-bar"><div class="title-bar-text">3D View</div></div>
+    <div class="window-body">
+      <div id="three"></div>
+      <div class="empty" id="empty">WAITING FOR POINTS</div>
+      <div class="vtools">
+        <button id="vlive">Live points</button>
+        <button id="vmodel" disabled>Model</button>
+      </div>
+      <div class="hint">drag · orbit &nbsp;&nbsp; scroll · zoom &nbsp;&nbsp; right-drag · pan</div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { PLYLoader } from "three/addons/loaders/PLYLoader.js";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+
+const $ = (id) => document.getElementById(id);
+const post = (url, body) => fetch(url, { method: "POST", body: JSON.stringify(body || {}) }).then(r => r.json()).then(render);
+
+// ---------- 3D ----------
+const host = $("three");
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(devicePixelRatio);
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(45, 1, 0.001, 100);
+cam.position.set(0, 0.12, 0.35);
+const controls = new OrbitControls(cam, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 0, -0.3);
+scene.add(new THREE.HemisphereLight(0xd8f6ff, 0x08304f, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(1, 2, 1.5); scene.add(sun);
+const grid = new THREE.GridHelper(0.4, 20, 0x49d8ff, 0x1d5f8a);
+grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
+
+const ptsGeo = new THREE.BufferGeometry();
+const live = new THREE.Points(ptsGeo, new THREE.PointsMaterial({ size: 0.0018, vertexColors: true }));
+scene.add(live);
+let model = null, mode = "live", modelUrl = null, firstPts = true;
+
+function resize() {
+  const r = host.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  cam.aspect = r.width / Math.max(r.height, 1); cam.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(host);
+(function loop() { controls.update(); renderer.render(scene, cam); requestAnimationFrame(loop); })();
+
+function frame(obj) {
+  const box = new THREE.Box3().setFromObject(obj), c = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3()).length() || 0.1;
+  controls.target.copy(c);
+  cam.position.copy(c).add(new THREE.Vector3(0, size * 0.45, size * 1.1));
+  grid.position.set(c.x, box.min.y, c.z);
+}
+
+async function pollPoints() {
+  if (mode === "live") {
+    const buf = await fetch("/points").then(r => r.arrayBuffer()).catch(() => null);
+    if (buf && buf.byteLength) {
+      const a = new Float32Array(buf), n = a.length / 6, p = new Float32Array(n * 3), c = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { p.set(a.subarray(i * 6, i * 6 + 3), i * 3); c.set(a.subarray(i * 6 + 3, i * 6 + 6), i * 3); }
+      ptsGeo.setAttribute("position", new THREE.BufferAttribute(p, 3));
+      ptsGeo.setAttribute("color", new THREE.BufferAttribute(c, 3));
+      ptsGeo.computeBoundingSphere();
+      $("empty").style.display = "none";
+      if (firstPts && n > 2000) { frame(live); firstPts = false; }
+    }
+  }
+  setTimeout(pollPoints, 350);
+}
+pollPoints();
+
+function loadModel(url, ext) {
+  const done = (obj) => {
+    if (model) scene.remove(model);
+    model = obj;
+    // normalize size: photogrammetry has no real scale
+    const box = new THREE.Box3().setFromObject(obj), s = 0.15 / (box.getSize(new THREE.Vector3()).length() || 1);
+    obj.scale.setScalar(s);
+    const b2 = new THREE.Box3().setFromObject(obj), c = b2.getCenter(new THREE.Vector3());
+    obj.position.sub(c).add(new THREE.Vector3(0, (b2.max.y - b2.min.y) / 2, 0));
+    scene.add(obj); show("model"); frame(obj);
+  };
+  const glossy = (geo) => new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+    color: geo.attributes.color ? 0xffffff : 0xbfefff, vertexColors: !!geo.attributes.color,
+    roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.15, side: THREE.DoubleSide }));
+  if (ext === "ply") new PLYLoader().load(url, (geo) => { geo.computeVertexNormals(); done(glossy(geo)); });
+  else new OBJLoader().load(url, (g) => {
+    g.traverse(o => { if (o.isMesh) { o.geometry.computeVertexNormals(); o.material = glossy(o.geometry).material; } });
+    done(g);
+  });
+}
+function show(m) {
+  mode = m; live.visible = m === "live"; if (model) model.visible = m === "model";
+  $("vlive").classList.toggle("default", m === "live"); $("vmodel").classList.toggle("default", m === "model");
+  if (m === "live") { firstPts = true; }
+}
+$("vlive").onclick = () => show("live");
+$("vmodel").onclick = () => model && show("model");
+show("live");
+
+// hidden tabs release their MJPEG connection (browsers allow ~6 per site)
+const feed = document.querySelector(".feed img");
+document.addEventListener("visibilitychange", () => { feed.src = document.hidden ? "" : "/stream?" + Date.now(); });
+
+// ---------- state + controls ----------
+const sliders = ["min_d", "max_d", "focus", "chroma"];
+let dragging = null;
+for (const k of sliders) {
+  const el = $(k), out = document.querySelector(`output[for=${k}]`);
+  el.oninput = () => { out.textContent = el.value; dragging = k; };
+  el.onchange = () => { post("/set", { [k]: +el.value }); dragging = null; };
+}
+$("photos_on").onchange = (e) => post("/set", { photos: e.target.checked });
+$("rec").onclick = () => post("/cmd/record");
+$("af").onclick = () => post("/cmd/autofocus");
+$("build").onclick = () => post("/cmd/build");
+
+function render(s) {
+  $("state").textContent = s.state; $("pill").dataset.s = s.state;
+  $("fps").textContent = s.fps; $("dist").textContent = s.dist || "–";
+  $("frames").textContent = s.frames; $("photos").textContent = s.photos; $("msg").textContent = s.msg;
+  $("rec").classList.toggle("on", s.state === "RECORDING");
+  $("ctl").classList.toggle("building", s.state === "BUILDING");
+  $("build").disabled = s.state === "BUILDING" || s.state === "RECORDING";
+  for (const k of sliders) if (k !== dragging) {
+    $(k).value = s.settings[k]; document.querySelector(`output[for=${k}]`).textContent = s.settings[k];
+  }
+  $("photos_on").checked = s.settings.photos;
+  if (s.model && s.model !== modelUrl) { modelUrl = s.model; $("vmodel").disabled = false; loadModel(s.model, s.model_ext); }
+}
+(async function poll() {
+  try { render(await fetch("/state").then(r => r.json())); } catch { $("state").textContent = "OFFLINE"; }
+  setTimeout(poll, 400);
+})();
+</script>
+</body>
+</html>

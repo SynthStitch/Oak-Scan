@@ -1,0 +1,8 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "script",
+  "author": "",
+  "description": {"": "Turntable ring + OAK-D Lite camera arm for 3D scanning"},
+  "supportedOS": "windows|mac",
+  "editEnabled": true
+}
