@@ -44,7 +44,7 @@ and a photo-to-mesh pipeline through **RealityScan**, ending in an editable mode
 
 | Path | What |
 |---|---|
-| `oak_scan_web.py` | Camera + recorder + HTTP server (MJPEG preview, live points, commands, Build). Reconnects if the camera drops off USB. |
+| `oak_scan_web.py` | Camera + recorder + HTTP server (live preview frames, live points, commands, Build). Reconnects if the camera drops off USB. |
 | `web/index.html` | Y2K / Aero-glass UI built with [7.css](https://github.com/khang-nd/7.css) and [three.js](https://threejs.org/). |
 | `rs_masks.py` | RealityScan masks (`photo.jpg.mask.png`): keeps what **moves** over the turn (platter + object) versus the median frame, drops the static backdrop and stand. |
 | `turntable.py` | Depth-only fallback reconstruction: revolution period, axis and spin direction, then TSDF fusion. `python turntable.py rec-…` |
@@ -94,7 +94,9 @@ To use different AMS slots, run `python make_3mf.py <white_slot> <black_slot>`.
 - Frame-to-frame RGB-D odometry fails on smooth, round objects. On a motorized turntable, angle = time / revolution
   period is far more robust.
 - The IMX214 autofocus trigger didn't move the lens, so a sharpness sweep plus manual focus lock is used instead.
-- Browsers allow about 6 connections per site. Color and depth share **one** MJPEG stream, and hidden tabs release it.
+- Don't stream the live view as MJPEG. Browsers allow about 6 connections per site, and a dropped stream stays black. The page fetches one
+  side-by-side color|depth JPEG at a time instead, so it heals itself, and hidden tabs pause.
+- Recording auto-stops after `MAX_REC_S` (120 s). A forgotten recording writes about 30 MB/s of 13 MP photos.
 - Full-res stills (actually 4000×3000) via the on-camera MJPEG encoder cap the whole pipeline at `PHOTO_FPS`.
 
 ## Credits

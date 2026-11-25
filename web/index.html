@@ -76,6 +76,9 @@
           box-shadow: inset 0 0 0 1px #00000080, 0 1px 0 #ffffffaa; }
   .feed img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .feed .lbl.r { left: calc(50% + 6px); }
+  .nosig { position: absolute; inset: 0; display: none; place-items: center; font-family: "Michroma"; letter-spacing: .3em;
+           font-size: 12px; color: #bfe9ff; background: repeating-linear-gradient(0deg, #0a2a44 0 2px, #061a2c 2px 4px); }
+  .feed.stale .nosig { display: grid; }
   .feed::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #ffffff88; }
   .feed .lbl { position: absolute; left: 6px; top: 5px; font: 600 10px "Segoe UI"; letter-spacing: .15em; color: #fff;
                text-shadow: 0 1px 2px #000; text-transform: uppercase; }
@@ -144,7 +147,7 @@
     <div class="window glass active">
       <div class="title-bar"><div class="title-bar-text">Camera</div></div>
       <div class="window-body has-space">
-        <div class="feed"><img src="/stream" alt="color and depth cameras"><span class="lbl">Color</span><span class="lbl r">Depth</span></div>
+        <div class="feed"><img alt="color and depth cameras"><span class="nosig" id="nosig">NO SIGNAL</span><span class="lbl">Color</span><span class="lbl r">Depth</span></div>
         <div class="readouts">
           <div><b id="fps">–</b><small>fps</small></div>
           <div><b id="dist">–</b><small>object cm</small></div>
@@ -293,9 +296,23 @@ $("vlive").onclick = () => show("live");
 $("vmodel").onclick = () => model && show("model");
 show("live");
 
-// hidden tabs release their MJPEG connection (browsers allow ~6 per site)
+// camera: fetch one frame at a time (self-healing; hidden tabs pause)
 const feed = document.querySelector(".feed img");
-document.addEventListener("visibilitychange", () => { feed.src = document.hidden ? "" : "/stream?" + Date.now(); });
+let lastOk = 0;
+(async function pullFrame() {
+  if (!document.hidden) {
+    try {
+      const r = await fetch("/frame", { cache: "no-store" });
+      if (r.ok) {
+        const url = URL.createObjectURL(await r.blob()), old = feed.src;
+        feed.src = url; if (old.startsWith("blob:")) URL.revokeObjectURL(old);
+        lastOk = Date.now();
+      }
+    } catch {}
+    feed.parentElement.classList.toggle("stale", Date.now() - lastOk > 2500);
+  }
+  setTimeout(pullFrame, 90);
+})();
 
 // ---------- state + controls ----------
 const sliders = ["min_d", "max_d", "focus", "chroma"];

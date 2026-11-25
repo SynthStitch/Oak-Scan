@@ -9,6 +9,7 @@ import turntable as tt
 W, H = 640, 480
 PHOTO_FPS = 8      # 13MP photos/s while recording; also caps the whole camera pipeline
 PORT = 8765
+MAX_REC_S = 120    # auto-stop recording (2 turns take ~40 s; a forgotten recording writes ~30 MB/s)
 OUT = os.path.dirname(os.path.abspath(__file__))
 WEB = os.path.join(OUT, "web")
 RS = r"C:\Program Files\Epic Games\RealityScan_2.2\RealityScan.exe"
@@ -35,7 +36,7 @@ class Scanner:
         self.msg, self.model = "starting camera...", None
         recs = sorted(d for d in os.listdir(OUT) if d.startswith("rec-"))
         self.last_rec = os.path.join(OUT, recs[-1]) if recs else None
-        self.jpg = None  # color | depth side by side, one MJPEG stream (browsers allow ~6 connections/site)
+        self.jpg, self.jpg_t = None, 0.0  # latest color | depth side-by-side frame, fetched one at a time
         self.pts = np.zeros(0, np.float32)
         threading.Thread(target=self.worker, daemon=True).start()
 
@@ -48,6 +49,7 @@ class Scanner:
             self.msg = "platter not found - check Min/Max depth"
         else:
             self.frames, self.n_photos, self.rec, self.recording = 0, 0, None, True
+            self.rec_t0 = time.time()
 
     def build(self):
         if self.building or self.recording or not self.last_rec:
@@ -156,6 +158,9 @@ class Scanner:
                     self.floor = fit_floor(plat, intr, self.s["max_d"] / 100)
                 if self.recording:
                     self.save_frame(color, depth, obj, g, K, rx, ry)
+                    if time.time() - self.rec_t0 > MAX_REC_S:
+                        self.record()  # stop
+                        self.msg = f"auto-stopped after {MAX_REC_S} s - " + self.msg
                 for m in jq.tryGetAll():  # full-res JPEGs encoded on the camera
                     if self.recording and self.rec and self.s["photos"]:
                         os.makedirs(os.path.join(self.rec, "photos"), exist_ok=True)
@@ -217,6 +222,7 @@ class Scanner:
                                cv2.COLORMAP_TURBO)
         dc[depth == 0] = 0
         self.jpg = cv2.imencode(".jpg", np.hstack([view, dc]), [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+        self.jpg_t = time.time()
         if n % 3 == 0 and obj.any():  # live point cloud: x, y(up), z(toward viewer), r, g, b
             v, u = np.nonzero(obj)
             if len(u) > 15000:
@@ -245,20 +251,10 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/":
             self.send(open(os.path.join(WEB, "index.html"), "rb").read(), "text/html; charset=utf-8")
-        elif path == "/stream":
-            self.send_response(200)
-            self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=f")
-            self.end_headers()
-            last = None
-            try:
-                while True:
-                    j = scanner.jpg
-                    if j is not None and j is not last:
-                        self.wfile.write(b"--f\r\nContent-Type: image/jpeg\r\n\r\n" + j + b"\r\n")
-                        last = j
-                    time.sleep(0.03)
-            except (ConnectionError, OSError):
-                pass  # page closed
+        elif path == "/frame":  # one JPEG per request: no long-lived connection to stall or exhaust
+            if scanner.jpg is None or time.time() - scanner.jpg_t > 3:
+                return self.send(b"no frame", "text/plain", 503)
+            self.send(scanner.jpg, "image/jpeg")
         elif path == "/state":
             self.send(json.dumps(scanner.state()).encode(), "application/json")
         elif path == "/points":
